@@ -20,6 +20,20 @@ def add_expense(name, amount, date, category):
     conn.commit()
     conn.close()
 
+def delete_expense(id):
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM expenses WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+
+def set_budget(budget):
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute("UPDATE budget SET amount=?", (budget,))
+    conn.commit()
+    conn.close()
+
 def get_expenses():
     conn = connect_db()
     c = conn.cursor()
