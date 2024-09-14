@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 import database
+from tkinter import ttk
 
 budget = 0  # Global variable to store the budget
 
@@ -26,7 +27,7 @@ def enable_expense_entries():
     entry_name.config(state=tk.NORMAL)
     entry_amount.config(state=tk.NORMAL)
     entry_date.config(state=tk.NORMAL)
-    entry_category.config(state=tk.NORMAL)
+    entry_category.config(state="readonly")  # Ensure the combobox is enabled
     button_add_expense.config(state=tk.NORMAL)
 
 def add_expense():
@@ -49,7 +50,7 @@ def add_expense():
             entry_name.delete(0, tk.END)
             entry_amount.delete(0, tk.END)
             entry_date.delete(0, tk.END)
-            entry_category.delete(0, tk.END)
+            entry_category.set('')  # Clear category selection
             display_expenses()
             label_remaining_budget.config(text=f"Remaining Budget: {remaining_budget}")
         except ValueError:
@@ -81,40 +82,48 @@ def create_ui():
     root = tk.Tk()
     root.title("Expense Tracker")
 
+    global entry_budget, button_set_budget, frame_expenses, entry_name, entry_amount, entry_date, entry_category, listbox_expenses, label_remaining_budget, button_add_expense
+
+    # Budget Entry
     tk.Label(root, text="Budget").grid(row=0)
-    global entry_budget, button_set_budget, frame_expenses
     entry_budget = tk.Entry(root)
     entry_budget.grid(row=0, column=1)
     button_set_budget = tk.Button(root, text="Set Budget", command=set_budget)
     button_set_budget.grid(row=0, column=2)
 
+    # Expense Entry
     tk.Label(root, text="Name").grid(row=1)
     tk.Label(root, text="Amount").grid(row=2)
     tk.Label(root, text="Date").grid(row=3)
     tk.Label(root, text="Category").grid(row=4)
 
-    global entry_name, entry_amount, entry_date, entry_category, listbox_expenses, label_remaining_budget, button_add_expense
     entry_name = tk.Entry(root, state=tk.DISABLED)
     entry_amount = tk.Entry(root, state=tk.DISABLED)
     entry_date = tk.Entry(root, state=tk.DISABLED)
-    entry_category = tk.Entry(root, state=tk.DISABLED)
 
     entry_name.grid(row=1, column=1)
     entry_amount.grid(row=2, column=1)
     entry_date.grid(row=3, column=1)
+
+    # Category Combobox
+    categories = ['Housing', 'Entertainment', 'Food', 'Transportation', 'Utilities', 'Insurance', 'Healthcare', 'Miscellaneous']
+    entry_category = ttk.Combobox(root, values=categories, state="readonly")
     entry_category.grid(row=4, column=1)
 
+    # Add and Clear Expense buttons
     button_add_expense = tk.Button(root, text="Add Expense", command=add_expense, state=tk.DISABLED)
     button_add_expense.grid(row=5, columnspan=2)
     tk.Button(root, text="Delete Expense", command=delete_expense).grid(row=6, columnspan=2)
     tk.Button(root, text="Clear Expenses", command=clear_expenses).grid(row=8, columnspan=2)
 
+    # Expense Listbox
     frame_expenses = tk.Frame(root)
     frame_expenses.grid(row=7, columnspan=2)
 
     listbox_expenses = tk.Listbox(frame_expenses, width=50, height=10)
     listbox_expenses.pack()
 
+    # Remaining Budget Label
     label_remaining_budget = tk.Label(root, text="Remaining Budget: 0")
     label_remaining_budget.grid(row=9, columnspan=2)
 
