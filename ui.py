@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import messagebox
 import database
 from tkinter import ttk
+import locale
+from datetime import datetime
 
 budget = 0  # Global variable to store the budget
 
@@ -13,15 +15,20 @@ def set_budget():
             budget = float(budget)
             total_expenses = sum(expense[2] for expense in database.get_expenses())  # Assuming amount is the third element
             remaining_budget = budget - total_expenses
-            messagebox.showinfo("Success", f"Budget set successfully. Remaining budget: {remaining_budget}")
+            
+            # Format the remaining budget as currency
+            formatted_remaining_budget = locale.currency(remaining_budget, grouping=True)
+            
+            messagebox.showinfo("Success", f"Budget set successfully. Remaining budget: {formatted_remaining_budget}")
             entry_budget.config(state=tk.DISABLED)
             button_set_budget.config(state=tk.DISABLED)
             enable_expense_entries()
-            label_remaining_budget.config(text=f"Remaining Budget: {remaining_budget}")
+            label_remaining_budget.config(text=f"Remaining Budget: {formatted_remaining_budget}")
         except ValueError:
             messagebox.showwarning("Input Error", "Please enter a valid number for the budget")
     else:
         messagebox.showwarning("Input Error", "Please enter a budget")
+
 
 def enable_expense_entries():
     entry_name.config(state=tk.NORMAL)
@@ -36,26 +43,39 @@ def add_expense():
     amount = entry_amount.get()
     date = entry_date.get()
     category = entry_category.get()
+    
     if name and amount and date and category:
         try:
+            # Ensure amount is a valid float number
             amount = float(amount)
+            
             total_expenses = sum(expense[2] for expense in database.get_expenses())  # Assuming amount is the third element
             remaining_budget = budget - total_expenses
+            
             if amount > remaining_budget:
                 messagebox.showwarning("Budget Exceeded", "Expense exceeds the remaining budget")
                 return
+            
+            # Add the expense to the database
             database.add_expense(name, amount, date, category)
             remaining_budget -= amount
+            
+            # Reset the entry fields and display success message
             messagebox.showinfo("Success", "Expense added successfully")
             entry_name.delete(0, tk.END)
             entry_amount.delete(0, tk.END)
             entry_date.delete(0, tk.END)
             entry_category.set('')  # Clear category selection
+            
+            # Refresh displayed expenses
             display_expenses()
             label_remaining_budget.config(text=f"Remaining Budget: {remaining_budget}")
+            
         except ValueError:
+            # Show warning if the amount is not a valid float
             messagebox.showwarning("Input Error", "Please enter a valid number for the amount")
     else:
+        # Show warning if any field is missing
         messagebox.showwarning("Input Error", "Please fill out all fields")
 
 def clear_expenses():
@@ -72,11 +92,24 @@ def delete_expense():
     else:
         messagebox.showwarning("Input Error", "Please select an expense to delete")
 
+# Set locale to user's locale (or you can specify a specific locale)
+locale.setlocale(locale.LC_ALL, '')
+
 def display_expenses():
     listbox_expenses.delete(0, tk.END)
     expenses = database.get_expenses()
     for row in expenses:
-        listbox_expenses.insert(tk.END, f"{row[0]} {row[1]} {row[2]} {row[3]} {row[4]}")  # Adjust format as needed
+        # Format amount as currency
+        formatted_amount = locale.currency(row[2], grouping=True)
+        
+        # Adjust the date format to match M/D/YY
+        try:
+            formatted_date = datetime.strptime(row[3], "%m/%d/%y").strftime("%B %d, %Y")
+        except ValueError:
+            formatted_date = row[3]  # Fallback if date format does not match
+        
+        # Display formatted amount and date
+        listbox_expenses.insert(tk.END, f"{row[0]} {row[1]} {formatted_amount} {formatted_date} {row[4]}")
 
 def create_ui():
     root = tk.Tk()
@@ -114,7 +147,7 @@ def create_ui():
     button_add_expense = tk.Button(root, text="Add Expense", command=add_expense, state=tk.DISABLED)
     button_add_expense.grid(row=5, columnspan=2)
     tk.Button(root, text="Delete Expense", command=delete_expense).grid(row=6, columnspan=2)
-    tk.Button(root, text="Clear Expenses", command=clear_expenses).grid(row=8, columnspan=2)
+    #tk.Button(root, text="Clear Expenses", command=clear_expenses).grid(row=8, columnspan=2)
 
     # Expense Listbox
     frame_expenses = tk.Frame(root)
