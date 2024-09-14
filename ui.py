@@ -4,6 +4,8 @@ import database
 from tkinter import ttk
 import locale
 from datetime import datetime
+import matplotlib.pyplot as plt
+from collections import defaultdict
 
 budget = 0  # Global variable to store the budget
 
@@ -111,6 +113,46 @@ def display_expenses():
         # Display formatted amount and date
         listbox_expenses.insert(tk.END, f"{row[0]} {row[1]} {formatted_amount} {formatted_date} {row[4]}")
 
+def plot_expenses():
+    expenses = database.get_expenses()
+    
+    # Aggregate amounts by category
+    category_totals = defaultdict(float)
+    for expense in expenses:
+        category = expense[4]
+        amount = expense[2]
+        category_totals[category] += amount
+    
+    # Convert aggregated data to lists
+    categories = list(category_totals.keys())
+    amounts = list(category_totals.values())
+    
+    total_amount = sum(amounts)
+    remaining_budget = budget - total_amount
+    
+    # Ensure remaining budget is not negative
+    if remaining_budget < 0:
+        remaining_budget = 0  # or handle as needed
+    
+    # Add remaining budget to categories and amounts
+    categories.append('Remaining Budget')
+    amounts.append(remaining_budget)
+    
+    # Create the pie chart
+    plt.figure(figsize=(8, 8))  # Optional: Set figure size for better clarity
+    plt.pie(amounts, labels=categories, autopct=lambda p: '{:.0f}'.format(p * sum(amounts) / 100),
+            startangle=140, colors=plt.cm.Paired(range(len(categories))))  # Optional: Use distinct colors
+    plt.title('Expense Distribution and Remaining Budget')  # Optional: Add a title
+    plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    
+    # Show the plot
+    plt.show()
+
+    # Optional: Print remaining budget for debugging
+    #print(f"Remaining Budget: {remaining_budget}")
+
+
+
 def create_ui():
     root = tk.Tk()
     root.title("Expense Tracker")
@@ -155,6 +197,9 @@ def create_ui():
 
     listbox_expenses = tk.Listbox(frame_expenses, width=50, height=10)
     listbox_expenses.pack()
+    
+    # Plot Expenses button
+    tk.Button(root, text="Plot Expenses", command=plot_expenses).grid(row=8, columnspan=2)
 
     # Remaining Budget Label
     label_remaining_budget = tk.Label(root, text="Remaining Budget: 0")
